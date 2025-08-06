@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@nanostores/react": "github:ai/react",
-    "exa-js": "^1.8.27",
     "@ai-sdk/openai": "^1.1.9",
-    "ai": "^4.1.16",
+    "@ai-sdk/togetherai": "^1.0.2",
+    "@nanostores/react": "github:ai/react",
     "@tailwindcss/typography": "^0.5.16",
+    "ai": "^4.1.16",
+    "exa-js": "^1.8.27",
     "next": "14.2.17",
     "react": "^18",
     "react-dom": "^18",
