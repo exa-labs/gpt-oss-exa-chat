@@ -1,101 +1,138 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useChat } from 'ai/react';
+import MessageContent from './components/messages';
+
+export default function Page() {
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+  const hasMessages = messages.length > 0;
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
+    <>
+      {/* Top Navigation Bar */}
+      <div className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-b z-50">
+        <div className="md:max-w-4xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
           <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href="https://dashboard.exa.ai/playground/answer"
             target="_blank"
-            rel="noopener noreferrer"
+            className="flex items-center px-4 py-1.5 bg-white border-2 border-[var(--brand-default)] text-[var(--brand-default)] 
+            rounded-full hover:bg-[var(--brand-default)] hover:text-white transition-all duration-200 
+            font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
+            <span className="text-sm">Try Exa API</span>
           </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          <div className="flex items-center gap-4 text-md text-gray-600">
+            <a
+              href="https://exa.ai/demos"
+              target="_blank"
+              className="hover:text-[var(--brand-default)] transition-colors"
+            >
+              <span className="underline">See More Demos</span>
+            </a>
+            <span className="text-gray-400">|</span>
+            <a
+              href="https://github.com/exa-labs/exa-o3mini-chat"
+              target="_blank"
+              className="flex items-center gap-1.5 hover:text-[var(--brand-default)] transition-colors"
+            >
+              <span className="underline">View Project Code</span>
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="md:max-w-4xl mx-auto px-4 md:px-6 py-6 pt-20 pb-24 space-y-6">
+        <div className="space-y-6">
+          {messages.map((message) => (
+            <div key={message.id}>
+              <div
+                className={`flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
+              >
+                <div
+                  className={`rounded-lg py-3 px-4 max-w-[85%] ${
+                    message.role === 'user'
+                      ? 'bg-[var(--secondary-darker)] rounded text-black text-base'
+                      : 'text-gray-900 text-base'
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap text-[15px]">
+                    <MessageContent content={message.content} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex items-center gap-2 text-gray-500 animate-pulse">
+              <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite]"></div>
+              <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_200ms]"></div>
+              <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_400ms]"></div>
+              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">Asking o3-mini and searching on Exa...</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Input Form - centered when no messages, fixed bottom otherwise */}
+      <div className={`${
+        hasMessages 
+          ? 'fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t' 
+          : 'fixed inset-0 flex items-center justify-center bg-transparent'
+        } z-40 transition-all duration-300`}>
+        <div className={`${
+          hasMessages 
+            ? 'w-full md:max-w-4xl mx-auto px-4 md:px-6 py-4' 
+            : 'w-full md:max-w-2xl mx-auto px-4 md:px-6'
+          }`}>
+          <form onSubmit={handleSubmit} className="relative flex w-full">
+            <input
+              value={input}
+              onChange={handleInputChange}
+              placeholder="Ask something..."
+              className="w-full p-4 pr-[130px] bg-white border border-gray-200 rounded-full shadow-sm 
+              focus:outline-none focus:ring-2 focus:ring-[var(--brand-default)] focus:ring-opacity-20 
+              focus:border-[var(--brand-default)] text-base transition-all duration-200 
+              placeholder:text-gray-400 hover:border-gray-300"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-[var(--brand-default)] 
+              text-white rounded-full shadow-sm hover:bg-[var(--brand-muted)] disabled:opacity-50 
+              disabled:cursor-not-allowed font-medium min-w-[110px] transition-all duration-200 
+              hover:shadow-md active:transform active:scale-95"
+            >
+              Search
+            </button>
+          </form>
+          {!hasMessages && (
+            <div className="text-center mt-6 text-gray-600 text-sm">
+              <span> powered by </span>
+                <a href="https://exa.ai" target="_blank" className="underline hover:text-[var(--brand-default)]">
+                  Exa - The Web Search API 
+                </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
