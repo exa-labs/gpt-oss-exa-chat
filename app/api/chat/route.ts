@@ -1,5 +1,5 @@
 import { togetherai } from '@ai-sdk/togetherai';
-import { streamText, tool } from 'ai';
+import { streamText, tool, convertToModelMessages } from 'ai';
 import { z } from 'zod';
 import Exa from 'exa-js';
 
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: togetherai('openai/gpt-oss-120b'),
     system: 'Always use the webSearch tool. Always provide source links in your response (the sources which you got from the webSearch tool). You are a helpful assistant that searches the web for information and provides accurate answer. Use simple english. Use the webSearch tool in every message!',
-    messages,
+    messages: convertToModelMessages(messages),
     tools: {
       webSearch: tool({
         description: 'Search the web for current information on a topic. Use this tool in every message, always. Always provide source links in your response.',
@@ -37,5 +37,5 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toTextStreamResponse();
+  return result.toUIMessageStreamResponse();
 }
