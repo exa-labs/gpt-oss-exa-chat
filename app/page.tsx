@@ -1,11 +1,25 @@
 'use client';
 
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
+import { useState } from 'react';
 import MessageContent from './components/messages';
 
 export default function Page() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+  const [input, setInput] = useState('');
+  const { messages, sendMessage, status } = useChat();
   const hasMessages = messages.length > 0;
+  const isLoading = status === 'streaming';
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    sendMessage({
+      role: 'user',
+      parts: [{ type: 'text', text: input }]
+    });
+    setInput('');
+  };
 
   return (
     <>
@@ -72,7 +86,12 @@ export default function Page() {
                   }`}
                 >
                   <div className="whitespace-pre-wrap text-[15px]">
-                    <MessageContent content={message.content} />
+                    {message.parts.map((part, index) => {
+                      if (part.type === 'text') {
+                        return <MessageContent key={index} content={part.text} />;
+                      }
+                      return null;
+                    })}
                   </div>
                 </div>
               </div>
@@ -85,7 +104,7 @@ export default function Page() {
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_200ms]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_400ms]"></div>
-              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">Asking o3-mini and searching on Exa...</span>
+              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">Asking GPT-OSS-120B and searching on Exa...</span>
             </div>
           )}
         </div>
@@ -105,7 +124,7 @@ export default function Page() {
           <form onSubmit={handleSubmit} className="relative flex w-full">
             <input
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Ask something..."
               className="w-full p-4 pr-[130px] bg-white border border-gray-200 rounded-full shadow-sm 
               focus:outline-none focus:ring-2 focus:ring-[var(--brand-default)] focus:ring-opacity-20 

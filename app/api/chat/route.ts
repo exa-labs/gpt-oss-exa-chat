@@ -12,15 +12,13 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: togetherai('openai/gpt-oss-120b') as any,
+    model: togetherai('openai/gpt-oss-120b'),
     system: 'Always use the webSearch tool. Always provide source links in your response (the sources which you got from the webSearch tool). You are a helpful assistant that searches the web for information and provides accurate answer. Use simple english. Use the webSearch tool in every message!',
     messages,
-    maxSteps: 2,
-    experimental_toolCallStreaming: true,
     tools: {
       webSearch: tool({
         description: 'Search the web for current information on a topic. Use this tool in every message, always. Always provide source links in your response.',
-        parameters: z.object({
+        inputSchema: z.object({
           query: z.string().describe('The search query'),
         }),
         execute: async ({ query }) => {
@@ -39,5 +37,5 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
