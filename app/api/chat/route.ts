@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: togetherai('openai/gpt-oss-120b'),
-    system: 'Always use the webSearch tool. Always provide source links in your response (the sources which you got from the webSearch tool). You are a helpful assistant that searches the web for information and provides accurate answer. Use simple english. Use the webSearch tool in every message!',
+    system: 'You are a helpful assitant. Always use the webSearch tool. Always provide source links in your response (the sources which you got from the webSearch tool). You are a helpful assistant that searches the web for information and provides accurate answer. Use simple english. Use the webSearch tool in every message! Do not create tables. You are a helpful assistant that searches the web for information and provides accurate answer.',
     messages: convertToModelMessages(messages),
     tools: {
       webSearch: tool({

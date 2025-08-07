@@ -1,10 +1,19 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MessageContent from './components/messages';
 import { getAssetPath } from './utils';
 import { DefaultChatTransport } from 'ai';
+
+// Function to clean streaming text by removing the first "analysis" word
+function cleanStreamingText(text: string) {
+  // Remove the first word if it's "analysis"
+  if (text.startsWith('analysis')) {
+    return text.replace(/^analysis\s*/, '');
+  }
+  return text;
+}
 
 // Function to parse the model's output and separate thinking from final answer
 function parseModelOutput(text: string) {
@@ -39,8 +48,19 @@ function parseModelOutput(text: string) {
 }
 
 // Simple collapsible thinking component
-function ThinkingSection({ content }: { content: string }) {
+function ThinkingSection({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Auto-expand when streaming, auto-collapse when done
+  useEffect(() => {
+    if (isStreaming) {
+      setIsExpanded(true);
+    } else if (!isStreaming && isExpanded) {
+      // Delay collapse slightly for smooth transition
+      const timer = setTimeout(() => setIsExpanded(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isStreaming]);
 
   return (
     <div className="mb-3">
@@ -50,7 +70,7 @@ function ThinkingSection({ content }: { content: string }) {
       >
         <span>Thinking</span>
         <svg
-          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -59,11 +79,11 @@ function ThinkingSection({ content }: { content: string }) {
         </svg>
       </button>
       
-      {isExpanded && (
+      <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
           <div className="whitespace-pre-wrap">{content}</div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -139,7 +159,10 @@ export default function Page() {
       {/* Chat Messages */}
       <div className="md:max-w-4xl mx-auto px-4 md:px-6 py-6 pt-20 pb-24 space-y-6">
         <div className="space-y-6">
-          {messages.map((message) => {
+          {messages.map((message, messageIndex) => {
+            const isLastMessage = messageIndex === messages.length - 1;
+            const isCurrentlyStreaming = isLastMessage && isLoading && message.role === 'assistant';
+            
             return (
             <div key={message.id}>
               <div
@@ -171,15 +194,20 @@ export default function Page() {
                           
                           return (
                             <div key={index}>
-                              {/* Show thinking if available */}
-                              {parsed.thinking && (
-                                <ThinkingSection content={parsed.thinking} />
+                              {/* Show thinking section - expanded during streaming */}
+                              {(parsed.thinking || isCurrentlyStreaming) && (
+                                <ThinkingSection 
+                                  content={parsed.thinking || cleanStreamingText(part.text)} 
+                                  isStreaming={isCurrentlyStreaming}
+                                />
                               )}
                               
-                              {/* Show final answer with markdown rendering */}
-                              <div className="whitespace-pre-wrap text-[15px]">
-                                <MessageContent content={parsed.finalAnswer} />
-                              </div>
+                              {/* Show final answer only if we have one */}
+                              {parsed.finalAnswer && !isCurrentlyStreaming && (
+                                <div className="whitespace-pre-wrap text-[15px]">
+                                  <MessageContent content={parsed.finalAnswer} />
+                                </div>
+                              )}
                             </div>
                           );
                         }
