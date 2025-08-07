@@ -3,8 +3,8 @@ import { streamText, tool, convertToModelMessages } from 'ai';
 import { z } from 'zod';
 import Exa from 'exa-js';
 
-// Allow responses up to 5 minutes
-export const maxDuration = 300;
+// Allow responses up to 100 seconds
+export const maxDuration = 100;
 
 const exa = new Exa(process.env.EXA_API_KEY);
 
@@ -23,9 +23,13 @@ export async function POST(req: Request) {
         }),
         execute: async ({ query }) => {
           try {
-            const results = await exa.search(query, {
-              numResults: 5,
+            const results = await exa.searchAndContents(query, {
+              numResults: 8,
               type: 'auto',
+              text: {
+                maxCharacters: 2000
+              },
+              livecrawl: "fallback",
             });
             console.log('Exa search results:', results.results);
             return results.results;
@@ -35,19 +39,6 @@ export async function POST(req: Request) {
           }
         },
       }),
-    },
-    onStepFinish: ({ text, toolCalls, toolResults }) => {
-      console.log('Step finished:');
-      console.log('- Text:', text);
-      console.log('- Tool calls:', toolCalls);
-      console.log('- Tool results:', toolResults);
-    },
-    onFinish: ({ text, toolCalls, toolResults, reasoning }) => {
-      console.log('Generation finished:');
-      console.log('- Final text:', text);
-      console.log('- All tool calls:', toolCalls);
-      console.log('- All tool results:', toolResults);
-      console.log('- Reasoning:', reasoning);
     },
   });
 
