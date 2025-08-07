@@ -97,8 +97,8 @@ export default function Page() {
           <a
             href="https://dashboard.exa.ai/"
             target="_blank"
-            className="flex items-center px-4 py-1.5 bg-white border-2 border-[var(--brand-default)] text-[var(--brand-default)] 
-            rounded-full hover:bg-[var(--brand-default)] hover:text-white transition-all duration-200 
+            className="flex items-center px-4 py-1.5 bg-[var(--brand-default)] text-white 
+            rounded-full hover:bg-[var(--brand-muted)] transition-all duration-200 
             font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5"
           >
             <span className="text-sm">Try Exa API</span>
@@ -150,7 +150,7 @@ export default function Page() {
                 <div
                   className={`rounded-lg py-3 px-4 max-w-[85%] ${
                     message.role === 'user'
-                      ? 'bg-[var(--secondary-darker)] rounded text-black text-base'
+                      ? 'bg-gray-100 text-gray-900 text-base'
                       : 'text-gray-900 text-base'
                   }`}
                 >
