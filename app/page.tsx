@@ -16,8 +16,6 @@ interface SearchResult {
   favicon?: string;
 }
 
-
-
 // Search Results Component
 function SearchResultsSection({ results, isExpanded, setIsExpanded }: { 
   results: SearchResult[]; 
@@ -81,7 +79,7 @@ export default function Page() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [previousQueries, setPreviousQueries] = useState<string[]>([]);
   const [isSourcesExpanded, setIsSourcesExpanded] = useState(true);
-  const [loadingDots, setLoadingDots] = useState('');
+  const [hasStartedStreaming, setHasStartedStreaming] = useState(false);
   
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
@@ -93,27 +91,19 @@ export default function Page() {
   const hasMessages = messages.length > 0 || isSearching;
   const isStreaming = status === 'streaming';
 
-  // Loading dots animation
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isSearching) {
-      let count = 0;
-      interval = setInterval(() => {
-        count = (count + 1) % 4;
-        setLoadingDots('.'.repeat(count));
-      }, 500);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isSearching]);
 
-  // Watch for LLM completion
+
+  // Watch for LLM streaming start and completion
   useEffect(() => {
-    if (!isStreaming && isLLMLoading) {
+    if (isStreaming && isLLMLoading) {
+      // LLM has started streaming, hide the loading indicator
       setIsLLMLoading(false);
+      setHasStartedStreaming(true);
+    } else if (!isStreaming && hasStartedStreaming) {
+      // Streaming has completed, reset for next query
+      setHasStartedStreaming(false);
     }
-  }, [isStreaming, isLLMLoading]);
+  }, [isStreaming, isLLMLoading, hasStartedStreaming]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +117,7 @@ export default function Page() {
     setIsLLMLoading(false);
     setSearchResults([]);
     setSearchError(null);
+    setHasStartedStreaming(false);
 
     try {
       // First, get web search results
@@ -281,15 +272,16 @@ export default function Page() {
                 </div>
               )}
               
-              {/* Show LLM loading after search results */}
+              {/* Show LLM loading after search results until streaming starts */}
               {message.role === 'user' && isLLMLoading && (
                 <div className="my-6">
                   <div className="flex items-center gap-2 text-gray-500">
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span className="text-sm">GPT-OSS is thinking...</span>
+                    <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_200ms]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_400ms]"></div>
+                    <span className="text-sm font-medium text-[var(--secondary-accent2x)]">
+                      GPT-OSS is generating
+                    </span>
                   </div>
                 </div>
               )}
@@ -306,13 +298,13 @@ export default function Page() {
 
           {/* Loading indicator for search */}
           {isSearching && (
-            <div className="flex items-center gap-2 text-gray-500 animate-pulse">
+            <div className="flex items-center gap-2 text-gray-500">
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_200ms]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_400ms]"></div>
-                             <span className="text-sm font-medium text-[var(--secondary-accent2x)]">
-                 Searching using Exa{loadingDots}
-               </span>
+              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">
+                Searching using Exa
+              </span>
             </div>
           )}
         </div>
@@ -348,10 +340,7 @@ export default function Page() {
               hover:shadow-md active:transform active:scale-95"
             >
               {isSearching ? (
-                <span className="inline-flex justify-center items-center">
-                  <span>Searching</span>
-                  <span className="w-[24px] text-left">{loadingDots}</span>
-                </span>
+                'Searching'
               ) : (
                 'Search'
               )}
