@@ -89,7 +89,7 @@ export default function Page() {
       <div className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-b z-50">
         <div className="md:max-w-4xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
           <a
-            href="https://dashboard.exa.ai/playground/answer"
+            href="https://dashboard.exa.ai/"
             target="_blank"
             className="flex items-center px-4 py-1.5 bg-white border-2 border-[var(--brand-default)] text-[var(--brand-default)] 
             rounded-full hover:bg-[var(--brand-default)] hover:text-white transition-all duration-200 
@@ -107,7 +107,7 @@ export default function Page() {
             </a>
             <span className="text-gray-400">|</span>
             <a
-              href="https://github.com/exa-labs/exa-o3mini-chat"
+              href="https://github.com/exa-labs/gpt-oss-exa-chat"
               target="_blank"
               className="flex items-center gap-1.5 hover:text-[var(--brand-default)] transition-colors"
             >
