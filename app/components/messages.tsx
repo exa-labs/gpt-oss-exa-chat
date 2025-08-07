@@ -2,23 +2,26 @@ import ReactMarkdown from 'react-markdown';
 
 // Function to convert URLs in text to markdown links
 function convertUrlsToMarkdown(text: string): string {
-  // Regex to match URLs (including those in parentheses like [source](url))
-  const urlRegex = /(\[source\])?(\()?https?:\/\/[^\s\)]+(\))?/g;
+  // First handle the LLM's format: 【URL】【URL】
+  text = text.replace(/【(https?:\/\/[^】]+)】/g, '[$1]($1) ');
   
-  return text.replace(urlRegex, (match, sourcePrefix, openParen, closeParen) => {
-    // If it's already in markdown format [source](url), leave it as is
-    if (sourcePrefix && openParen) {
+  // Then handle any remaining standalone URLs or parentheses URLs
+  const urlRegex = /(\[.*?\])?(\()?https?:\/\/[^\s\)】]+(\))?/g;
+  
+  return text.replace(urlRegex, (match, linkPrefix, openParen, closeParen) => {
+    // If it's already in markdown format [url](url), leave it as is
+    if (linkPrefix && openParen) {
       return match;
     }
     
-    // If it's a URL in parentheses like (https://...), convert to [source](url)
+    // If it's a URL in parentheses like (https://...), convert to [url](url)
     if (openParen && closeParen) {
       const url = match.slice(1, -1); // Remove parentheses
-      return `[source](${url})`;
+      return `[${url}](${url})`;
     }
     
-    // For standalone URLs, convert to [source](url)
-    return `[source](${match})`;
+    // For standalone URLs, convert to [url](url)
+    return `[${match}](${match})`;
   });
 }
 

@@ -79,8 +79,8 @@ function ThinkingSection({ content, isStreaming }: { content: string; isStreamin
         </svg>
       </button>
       
-      <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
+      <div className={`transition-all duration-300 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700 overflow-y-auto max-h-80">
           <div className="whitespace-pre-wrap">{content}</div>
         </div>
       </div>
