@@ -4,6 +4,68 @@ import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
 import MessageContent from './components/messages';
 
+// Function to parse the model's output and separate thinking from final answer
+function parseModelOutput(text: string) {
+  // Split the text to find the final answer section
+  const parts = text.split('assistantfinal');
+  
+  if (parts.length > 1) {
+    // We have a thinking part and a final part
+    const thinkingPart = parts[0].trim();
+    const finalPart = parts[1].trim();
+    
+    // Clean up the thinking part by removing machine-specific commentary
+    const cleanThinking = thinkingPart
+      .replace(/assistantcommentary to=functions\.webSearch json\{[^}]*\}/g, '[Tool Call]')
+      .replace(/assistantanalysis/g, '')
+      .replace(/analysis/g, '')
+      .replace(/\*\*/g, '') // Remove markdown asterisks
+      .replace(/\n+/g, '\n') // Clean up multiple newlines
+      .trim();
+    
+    return {
+      thinking: cleanThinking,
+      finalAnswer: finalPart
+    };
+  }
+  
+  // If no clear separation, treat entire text as final answer
+  return {
+    thinking: null,
+    finalAnswer: text
+  };
+}
+
+// Simple collapsible thinking component
+function ThinkingSection({ content }: { content: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="mb-3">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+      >
+        <span>Thinking</span>
+        <svg
+          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isExpanded && (
+        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
+          <div className="whitespace-pre-wrap">{content}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Page() {
   const [input, setInput] = useState('');
   const { messages, sendMessage, status } = useChat();
@@ -71,7 +133,8 @@ export default function Page() {
       {/* Chat Messages */}
       <div className="md:max-w-4xl mx-auto px-4 md:px-6 py-6 pt-20 pb-24 space-y-6">
         <div className="space-y-6">
-          {messages.map((message) => (
+          {messages.map((message) => {
+            return (
             <div key={message.id}>
               <div
                 className={`flex ${
@@ -85,18 +148,44 @@ export default function Page() {
                       : 'text-gray-900 text-base'
                   }`}
                 >
-                  <div className="whitespace-pre-wrap text-[15px]">
-                    {message.parts.map((part, index) => {
-                      if (part.type === 'text') {
-                        return <MessageContent key={index} content={part.text} />;
-                      }
-                      return null;
-                    })}
-                  </div>
+                  {message.role === 'user' ? (
+                    <div className="whitespace-pre-wrap text-[15px]">
+                      {message.parts.map((part, index) => {
+                        if (part.type === 'text') {
+                          return <span key={index}>{part.text}</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+                  ) : (
+                    <div>
+                      {message.parts.map((part, index) => {
+                        if (part.type === 'text') {
+                          const parsed = parseModelOutput(part.text);
+                          
+                          return (
+                            <div key={index}>
+                              {/* Show thinking if available */}
+                              {parsed.thinking && (
+                                <ThinkingSection content={parsed.thinking} />
+                              )}
+                              
+                              {/* Show final answer with markdown rendering */}
+                              <div className="whitespace-pre-wrap text-[15px]">
+                                <MessageContent content={parsed.finalAnswer} />
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Loading indicator */}
           {isLoading && (

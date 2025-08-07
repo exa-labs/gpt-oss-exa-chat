@@ -27,6 +27,7 @@ export async function POST(req: Request) {
               numResults: 5,
               type: 'auto',
             });
+            console.log('Exa search results:', results.results);
             return results.results;
           } catch (error) {
             console.error('Exa search error:', error);
@@ -34,6 +35,19 @@ export async function POST(req: Request) {
           }
         },
       }),
+    },
+    onStepFinish: ({ text, toolCalls, toolResults }) => {
+      console.log('Step finished:');
+      console.log('- Text:', text);
+      console.log('- Tool calls:', toolCalls);
+      console.log('- Tool results:', toolResults);
+    },
+    onFinish: ({ text, toolCalls, toolResults, reasoning }) => {
+      console.log('Generation finished:');
+      console.log('- Final text:', text);
+      console.log('- All tool calls:', toolCalls);
+      console.log('- All tool results:', toolResults);
+      console.log('- Reasoning:', reasoning);
     },
   });
 
