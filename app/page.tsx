@@ -204,7 +204,7 @@ export default function Page() {
                               
                               {/* Show final answer only if we have one */}
                               {parsed.finalAnswer && !isCurrentlyStreaming && (
-                                <div className="whitespace-pre-wrap text-[15px]">
+                                <div className="text-[15px] leading-normal">
                                   <MessageContent content={parsed.finalAnswer} />
                                 </div>
                               )}
