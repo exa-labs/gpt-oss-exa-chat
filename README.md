@@ -1,6 +1,8 @@
 # 💬 Exa & GPT-OSS Chat App
 ### Powered by [Exa](https://exa.ai) - The Web Search API & OpenAI's GPT-OSS-120B
 
+App Link: https://demo.exa.ai/gpt-oss-chat
+
 ![Screenshot](https://demo.exa.ai/gpt-oss-chat/opengraph-image.jpg)
 
 <br>
