@@ -6,6 +6,16 @@ import MessageContent from './components/messages';
 import { getAssetPath } from './utils';
 import { DefaultChatTransport } from 'ai';
 
+// Interface for search results
+interface SearchResult {
+  title: string;
+  url: string;
+  text: string;
+  author?: string;
+  publishedDate?: string;
+  favicon?: string;
+}
+
 // Function to clean streaming text by removing the first "analysis" word
 function cleanStreamingText(text: string) {
   // Remove the first word if it's "analysis"
@@ -63,50 +73,189 @@ function ThinkingSection({ content, isStreaming }: { content: string; isStreamin
   }, [isStreaming]);
 
   return (
-    <div className="mb-3">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-      >
-        <span>Thinking</span>
-        <svg
-          className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    <div className="mb-6 space-y-4">
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      
-      <div className={`transition-all duration-300 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700 overflow-y-auto max-h-80">
-          <div className="whitespace-pre-wrap">{content}</div>
-        </div>
+          <svg 
+            className={`w-5 h-5 transform hover:text-[var(--brand-default)] transition-colors transition-transform ${isExpanded ? 'rotate-0' : '-rotate-180'}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+          <h3 className="text-md font-medium">Thinking</h3>
+        </button>
       </div>
+
+      {isExpanded && (
+        <div className="pl-4 relative">
+          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+          <div className="text-sm text-gray-600 whitespace-pre-wrap">{content}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Search Results Component
+function SearchResultsSection({ results, isExpanded, setIsExpanded }: { 
+  results: SearchResult[]; 
+  isExpanded: boolean; 
+  setIsExpanded: (expanded: boolean) => void; 
+}) {
+  return (
+    <div className="mb-6 space-y-4">
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2"
+        >
+          <svg 
+            className={`w-5 h-5 transform hover:text-[var(--brand-default)] transition-colors transition-transform ${isExpanded ? 'rotate-0' : '-rotate-180'}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+          <h3 className="text-md font-medium">Search Results</h3>
+        </button>
+      </div>
+
+      {isExpanded && (
+        <div className="pl-4 relative">
+          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+          <div className="space-y-2">
+            {results.map((result, idx) => (
+              <div key={idx} className="text-sm group relative">
+                <a href={result.url} 
+                   target="_blank" 
+                   className="text-gray-600 hover:text-[var(--brand-default)] flex items-center gap-2">
+                  [{idx + 1}] {result.title}
+                  {result.favicon && (
+                    <img 
+                      src={result.favicon} 
+                      alt=""
+                      className="w-4 h-4 object-contain"
+                    />
+                  )}
+                </a>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 -bottom-6 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 pointer-events-none">
+                  {result.url}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function Page() {
   const [input, setInput] = useState('');
-  const { messages, sendMessage, status } = useChat({
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLLMLoading, setIsLLMLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [previousQueries, setPreviousQueries] = useState<string[]>([]);
+  const [isSourcesExpanded, setIsSourcesExpanded] = useState(true);
+  const [loadingDots, setLoadingDots] = useState('');
+  
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: getAssetPath('/api/chat'),
     }),
   });
-  const hasMessages = messages.length > 0;
-  const isLoading = status === 'streaming';
+  
+  // Track if we have messages OR if we're currently searching (to move input down immediately)
+  const hasMessages = messages.length > 0 || isSearching;
+  const isStreaming = status === 'streaming';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Loading dots animation
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isSearching) {
+      let count = 0;
+      interval = setInterval(() => {
+        count = (count + 1) % 4;
+        setLoadingDots('.'.repeat(count));
+      }, 500);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSearching]);
+
+  // Watch for LLM completion
+  useEffect(() => {
+    if (!isStreaming && isLLMLoading) {
+      setIsLLMLoading(false);
+    }
+  }, [isStreaming, isLLMLoading]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isSearching || isLLMLoading) return;
     
-    sendMessage({
-      role: 'user',
-      parts: [{ type: 'text', text: input }]
-    });
+    const userQuery = input;
     setInput('');
+    
+    // Reset states
+    setIsSearching(true);
+    setIsLLMLoading(false);
+    setSearchResults([]);
+    setSearchError(null);
+
+    try {
+      // First, get web search results
+      const searchResponse = await fetch(getAssetPath('/api/exawebsearch'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          query: userQuery,
+          previousQueries: previousQueries.slice(-3)
+        }),
+      });
+
+      if (!searchResponse.ok) {
+        throw new Error('Search failed');
+      }
+
+      const { results } = await searchResponse.json();
+      setSearchResults(results);
+      setIsSearching(false);
+      setIsLLMLoading(true);
+
+      // Format search context
+      const searchContext = results.length > 0
+        ? `Web Search Results:\n\n${results.map((r: SearchResult, i: number) => 
+            `Source [${i + 1}]:\nTitle: ${r.title}\nURL: ${r.url}\n${r.author ? `Author: ${r.author}\n` : ''}${r.publishedDate ? `Date: ${r.publishedDate}\n` : ''}Content: ${r.text}\n---`
+          ).join('\n\n')}\n\nInstructions: Based on the above search results, please provide an answer to the user's query. When referencing information, cite the source number in brackets like [1], [2], etc. Use simple english words. Do not create tables. You are a helpful and friendly assistant.`
+        : '';
+
+      // Send message with search context
+      sendMessage({
+        role: 'user',
+        parts: [{ 
+          type: 'text', 
+          text: searchContext ? `${searchContext}\n\nUser Query: ${userQuery}` : userQuery 
+        }]
+      });
+
+      // Update previous queries after successful search
+      setPreviousQueries(prev => [...prev, userQuery].slice(-3));
+
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : 'Search failed');
+      console.error('Error:', err);
+      setIsLLMLoading(false);
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -161,10 +310,29 @@ export default function Page() {
         <div className="space-y-6">
           {messages.map((message, messageIndex) => {
             const isLastMessage = messageIndex === messages.length - 1;
-            const isCurrentlyStreaming = isLastMessage && isLoading && message.role === 'assistant';
+            const isCurrentlyStreaming = isLastMessage && isStreaming && message.role === 'assistant';
             
             return (
             <div key={message.id}>
+              {/* Show thinking section before assistant message */}
+              {message.role === 'assistant' && (
+                <div className="my-6">
+                  {message.parts.map((part, index) => {
+                    if (part.type === 'text') {
+                      const parsed = parseModelOutput(part.text);
+                      return (
+                        <ThinkingSection 
+                          key={index}
+                          content={parsed.thinking || cleanStreamingText(part.text)} 
+                          isStreaming={isCurrentlyStreaming}
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              )}
+              
               <div
                 className={`flex ${
                   message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -181,7 +349,10 @@ export default function Page() {
                     <div className="whitespace-pre-wrap text-[15px]">
                       {message.parts.map((part, index) => {
                         if (part.type === 'text') {
-                          return <span key={index}>{part.text}</span>;
+                          // Extract just the user query from the text (remove search context)
+                          const userQueryMatch = part.text.match(/User Query: (.+)$/);
+                          const displayText = userQueryMatch ? userQueryMatch[1] : part.text;
+                          return <span key={index}>{displayText}</span>;
                         }
                         return null;
                       })}
@@ -194,14 +365,6 @@ export default function Page() {
                           
                           return (
                             <div key={index}>
-                              {/* Show thinking section - expanded during streaming */}
-                              {(parsed.thinking || isCurrentlyStreaming) && (
-                                <ThinkingSection 
-                                  content={parsed.thinking || cleanStreamingText(part.text)} 
-                                  isStreaming={isCurrentlyStreaming}
-                                />
-                              )}
-                              
                               {/* Show final answer only if we have one */}
                               {parsed.finalAnswer && !isCurrentlyStreaming && (
                                 <div className="text-[15px] leading-normal">
@@ -217,17 +380,50 @@ export default function Page() {
                   )}
                 </div>
               </div>
+              
+              {/* Show search results after user message */}
+              {message.role === 'user' && searchResults.length > 0 && (
+                <div className="my-6">
+                  <SearchResultsSection 
+                    results={searchResults}
+                    isExpanded={isSourcesExpanded}
+                    setIsExpanded={setIsSourcesExpanded}
+                  />
+                </div>
+              )}
+              
+              {/* Show LLM loading after search results */}
+              {message.role === 'user' && isLLMLoading && (
+                <div className="my-6">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-sm">GPT-OSS is thinking...</span>
+                  </div>
+                </div>
+              )}
             </div>
             );
           })}
 
-          {/* Loading indicator */}
-          {isLoading && (
+          {/* Search Error */}
+          {searchError && (
+            <div className="p-4 bg-red-50 rounded border border-red-100">
+              <p className="text-sm text-red-800">⚠️ {searchError}</p>
+            </div>
+          )}
+
+          {/* Loading indicator for search */}
+          {isSearching && (
             <div className="flex items-center gap-2 text-gray-500 animate-pulse">
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_200ms]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_400ms]"></div>
-              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">Asking gpt-oss and searching on exa...</span>
+                             <span className="text-sm font-medium text-[var(--secondary-accent2x)]">
+                 Searching using Exa{loadingDots}
+               </span>
             </div>
           )}
         </div>
@@ -256,13 +452,20 @@ export default function Page() {
             />
             <button
               type="submit"
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isSearching || isLLMLoading}
               className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-[var(--brand-default)] 
               text-white rounded-full shadow-sm hover:bg-[var(--brand-muted)] disabled:opacity-50 
               disabled:cursor-not-allowed font-medium min-w-[110px] transition-all duration-200 
               hover:shadow-md active:transform active:scale-95"
             >
-              Search
+              {isSearching ? (
+                <span className="inline-flex justify-center items-center">
+                  <span>Searching</span>
+                  <span className="w-[24px] text-left">{loadingDots}</span>
+                </span>
+              ) : (
+                'Search'
+              )}
             </button>
           </form>
           {!hasMessages && (
