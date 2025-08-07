@@ -16,90 +16,7 @@ interface SearchResult {
   favicon?: string;
 }
 
-// Function to clean streaming text by removing the first "analysis" word
-function cleanStreamingText(text: string) {
-  // Remove the first word if it's "analysis"
-  if (text.startsWith('analysis')) {
-    return text.replace(/^analysis\s*/, '');
-  }
-  return text;
-}
 
-// Function to parse the model's output and separate thinking from final answer
-function parseModelOutput(text: string) {
-  // Split the text to find the final answer section
-  const parts = text.split('assistantfinal');
-  
-  if (parts.length > 1) {
-    // We have a thinking part and a final part
-    const thinkingPart = parts[0].trim();
-    const finalPart = parts[1].trim();
-    
-    // Clean up the thinking part by removing machine-specific commentary
-    const cleanThinking = thinkingPart
-      .replace(/assistantcommentary to=functions\.webSearch json\{[^}]*\}/g, '[Tool Call]')
-      .replace(/assistantanalysis/g, '')
-      .replace(/analysis/g, '')
-      .replace(/\*\*/g, '') // Remove markdown asterisks
-      .replace(/\n+/g, '\n') // Clean up multiple newlines
-      .trim();
-    
-    return {
-      thinking: cleanThinking,
-      finalAnswer: finalPart
-    };
-  }
-  
-  // If no clear separation, treat entire text as final answer
-  return {
-    thinking: null,
-    finalAnswer: text
-  };
-}
-
-// Simple collapsible thinking component
-function ThinkingSection({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Auto-expand when streaming, auto-collapse when done
-  useEffect(() => {
-    if (isStreaming) {
-      setIsExpanded(true);
-    } else if (!isStreaming && isExpanded) {
-      // Delay collapse slightly for smooth transition
-      const timer = setTimeout(() => setIsExpanded(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isStreaming]);
-
-  return (
-    <div className="mb-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2"
-        >
-          <svg 
-            className={`w-5 h-5 transform hover:text-[var(--brand-default)] transition-colors transition-transform ${isExpanded ? 'rotate-0' : '-rotate-180'}`} 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-          </svg>
-          <h3 className="text-md font-medium">Thinking</h3>
-        </button>
-      </div>
-
-      {isExpanded && (
-        <div className="pl-4 relative">
-          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-          <div className="text-sm text-gray-600 whitespace-pre-wrap">{content}</div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // Search Results Component
 function SearchResultsSection({ results, isExpanded, setIsExpanded }: { 
@@ -309,30 +226,9 @@ export default function Page() {
       <div className="md:max-w-4xl mx-auto px-4 md:px-6 py-6 pt-20 pb-24 space-y-6">
         <div className="space-y-6">
           {messages.map((message, messageIndex) => {
-            const isLastMessage = messageIndex === messages.length - 1;
-            const isCurrentlyStreaming = isLastMessage && isStreaming && message.role === 'assistant';
             
             return (
             <div key={message.id}>
-              {/* Show thinking section before assistant message */}
-              {message.role === 'assistant' && (
-                <div className="my-6">
-                  {message.parts.map((part, index) => {
-                    if (part.type === 'text') {
-                      const parsed = parseModelOutput(part.text);
-                      return (
-                        <ThinkingSection 
-                          key={index}
-                          content={parsed.thinking || cleanStreamingText(part.text)} 
-                          isStreaming={isCurrentlyStreaming}
-                        />
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              )}
-              
               <div
                 className={`flex ${
                   message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -361,16 +257,9 @@ export default function Page() {
                     <div>
                       {message.parts.map((part, index) => {
                         if (part.type === 'text') {
-                          const parsed = parseModelOutput(part.text);
-                          
                           return (
-                            <div key={index}>
-                              {/* Show final answer only if we have one */}
-                              {parsed.finalAnswer && !isCurrentlyStreaming && (
-                                <div className="text-[15px] leading-normal">
-                                  <MessageContent content={parsed.finalAnswer} />
-                                </div>
-                              )}
+                            <div key={index} className="text-[15px] leading-normal">
+                              <MessageContent content={part.text} />
                             </div>
                           );
                         }
