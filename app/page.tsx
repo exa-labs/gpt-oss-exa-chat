@@ -227,7 +227,7 @@ export default function Page() {
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_200ms]"></div>
               <div className="w-2 h-2 rounded-full bg-[var(--secondary-accent2x)] animate-[bounce_1s_infinite_400ms]"></div>
-              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">Asking GPT-OSS-120B and searching on Exa...</span>
+              <span className="text-sm font-medium text-[var(--secondary-accent2x)]">Asking gpt-oss and searching on exa...</span>
             </div>
           )}
         </div>
