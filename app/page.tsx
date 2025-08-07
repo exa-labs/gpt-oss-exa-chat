@@ -3,6 +3,8 @@
 import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
 import MessageContent from './components/messages';
+import { getAssetPath } from './utils';
+import { DefaultChatTransport } from 'ai';
 
 // Function to parse the model's output and separate thinking from final answer
 function parseModelOutput(text: string) {
@@ -68,7 +70,11 @@ function ThinkingSection({ content }: { content: string }) {
 
 export default function Page() {
   const [input, setInput] = useState('');
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: getAssetPath('/api/chat'),
+    }),
+  });
   const hasMessages = messages.length > 0;
   const isLoading = status === 'streaming';
 

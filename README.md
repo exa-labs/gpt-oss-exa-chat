@@ -56,7 +56,7 @@ EXA_API_KEY=your_exa_api_key_here
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000/gpt-oss-chat](http://localhost:3000/gpt-oss-chat) in your browser
 
 <br>
 
