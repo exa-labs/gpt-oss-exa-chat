@@ -322,9 +322,9 @@ export default function Page() {
             : 'w-full md:max-w-2xl mx-auto px-4 md:px-6'
           }`}>
           {!hasMessages && (
-            <div className="text-center mb-8">
+            <div className="text-center mb-10">
               <div className="text-4xl font-bold text-gray-900 mb-2">
-                gpt-oss with exa websearch app
+                try gpt-oss with exa search
               </div>
             </div>
           )}
