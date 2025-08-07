@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         text: {
             maxCharacters: 2000
           },
-        numResults: 8,
+        numResults: 10,
         livecrawl: "fallback",
       }
     );
